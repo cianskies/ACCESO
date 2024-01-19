@@ -25,7 +25,7 @@ CREATE OR REPLACE TYPE NOTASASIGNATURA AS OBJECT(
 	NOTASEPT NOTA
 	--definir funciones--
  );
- 
+ /
 --5.Hay un array donde recibe todas las notas, se puede obtener con una funcion
 CREATE OR REPLACE TYPE VNOTASASIGNATURA AS VARRAY(5) OF NOTA;
 /
@@ -75,28 +75,98 @@ CREATE OR REPLACE TYPE TALUMNOS AS TABLE OF ALUMNO;
 ---DECLARACIONES-----------
 
 DECLARE
-	--Hay que empezar la casa por el tejado, primero hacer los cursos y
-	--las asignaturas, las inicializamos aqui y los alumnos en el begin.
-	CURSO1 CURSO:=CURSO(1,"Primer curso","Basico",0);
-	CURSO2 CURSO:=CURSO(2,"Segundo curso","Basico",1);
-	CURSO3 CURSO:=CURSO(3,"Tercer curso","Intermedio",1);
-	CURSO4 CURSO:=CURSO(4,"Cuarto curso","Avanzado",0);
-	/*---*/
-	ASIG1 ASIGNATURA:=ASIGNATURA(0001,"Lengua",1);
-	ASIG1 ASIGNATURA:=ASIGNATURA(0001,"Lengua",1);
-	ASIG1 ASIGNATURA:=ASIGNATURA(0001,"Lengua",1);
-	ASIG1 ASIGNATURA:=ASIGNATURA(0001,"Lengua",1);
-	ASIG1 ASIGNATURA:=ASIGNATURA(0001,"Lengua",1);
-	ASIG1 ASIGNATURA:=ASIGNATURA(0001,"Lengua",1);
-	/*---*/
-	LUIS ALUMNO,
-	JOSE ALUMNO,
-	MARIA ALUMNO,
-	CELIA ALUMNO,
-	JORGE ALUMNO,
-	MANUEL ALUMNO,
-	LUCIA ALUMNO
-BEGIN
+	-- Hay que empezar la casa por el tejado, primero hacer los cursos y
+	-- las asignaturas, las inicializamos aquí y los alumnos en el BEGIN.
+	CURSOS TCURSOS := TCURSOS(
+		CURSO(1, 'Primer curso', 'Basico', '0'),
+		CURSO(2, 'Segundo curso', 'Basico', '1'),
+		CURSO(3, 'Tercer curso', 'Intermedio', '1'),
+		CURSO(4, 'Cuarto curso', 'Avanzado', '0')
+	);
 
+	ASIGNATURAS TASIGNATURAS := TASIGNATURAS(
+		ASIGNATURA(0001, 'Lengua', '1'),
+		ASIGNATURA(0002, 'Mates', '1'),
+		ASIGNATURA(0003, 'Ingles', '1'),
+		ASIGNATURA(0004, 'Naturales', '2'),
+		ASIGNATURA(0005, 'Sociales', '2'),
+		ASIGNATURA(0006, 'Fisica', '2')
+	);
+
+	ALUMNOS TALUMNOS := TALUMNOS();
+
+	LUIS ALUMNO := ALUMNO(
+		'56195364Q',
+		'Luis',
+		DIRECCION('Calle Versalles', 'Mostoles', 28931),
+		VTELEFONOS(641018078, 671779646),
+		TO_DATE('01-FEB-2013', 'DD-MON-YYYY'),
+		1,
+		TNOTAS(
+			NOTASASIGNATURA('56195364Q', 0001, NOTA(4), NOTA(5), NOTA(4), NOTA(6), NOTA(6)),
+			NOTASASIGNATURA('56195364Q', 0003, NOTA(7), NOTA(7), NOTA(7), NOTA(0), NOTA(7)),
+			NOTASASIGNATURA('56195364Q', 0004, NOTA(2), NOTA(3), NOTA(2), NOTA(4), NOTA(0))
+		)
+		);
+	CARLOS ALUMNO:=	ALUMNO(
+        '99998888D',
+        'Carlos',
+        DIRECCION('Gran Vía', 'Barcelona', 08001),
+        VTELEFONOS(600700800, 900100200),
+        TO_DATE('05-MAR-2017', 'DD-MON-YYYY'),
+        4,
+        TNOTAS(
+            NOTASASIGNATURA('99998888D', 0002, NOTA(6), NOTA(7), NOTA(8), NOTA(7), NOTA(8)),
+            NOTASASIGNATURA('99998888D', 0004, NOTA(9), NOTA(8), NOTA(9), NOTA(9), NOTA(8)),
+            NOTASASIGNATURA('99998888D', 0006, NOTA(8), NOTA(9), NOTA(8), NOTA(7), NOTA(9))
+        )
+		);
+	MARIA ALUMNO:= ALUMNO(
+        '98765432B',
+        'Maria',
+        DIRECCION('Avenida de Mayo', 'Buenos Aires', 1002),
+        VTELEFONOS(654321987, 678901234),
+        TO_DATE('20-MAR-2015', 'DD-MON-YYYY'),
+        3,
+        TNOTAS(
+            NOTASASIGNATURA('98765432B', 0001, NOTA(7), NOTA(8), NOTA(7), NOTA(9), NOTA(9)),
+            NOTASASIGNATURA('98765432B', 0004, NOTA(9), NOTA(9), NOTA(8), NOTA(9), NOTA(8)),
+            NOTASASIGNATURA('98765432B', 0006, NOTA(8), NOTA(8), NOTA(9), NOTA(9), NOTA(9))
+        )
+    );
+	
+
+BEGIN
+	-- Insertar el alumno Luis en la tabla de alumnos.
+	ALUMNOS.EXTEND;
+	ALUMNOS(ALUMNOS.LAST) := LUIS;
+	ALUMNOS.EXTEND;
+	ALUMNOS(ALUMNOS.LAST) := CARLOS;
+	ALUMNOS.EXTEND;
+	ALUMNOS(ALUMNOS.LAST) := MARIA;
+	
+	 FOR i IN 1..ALUMNOS.COUNT LOOP
+        DBMS_OUTPUT.PUT_LINE('Alumno ' || i || ':');
+        DBMS_OUTPUT.PUT_LINE('DNI: ' || ALUMNOS(i).DNI);
+        DBMS_OUTPUT.PUT_LINE('Nombre: ' || ALUMNOS(i).NOMBRE);
+        DBMS_OUTPUT.PUT_LINE('Dirección: ' || ALUMNOS(i).DIREC.CALLE || ', ' || ALUMNOS(i).DIREC.POBLACION || ', ' || ALUMNOS(i).DIREC.CODPOSTAL);
+        DBMS_OUTPUT.PUT_LINE('Teléfonos: ' || ALUMNOS(i).TELF(1) || ', ' || ALUMNOS(i).TELF(2));
+        DBMS_OUTPUT.PUT_LINE('Fecha de Nacimiento: ' || TO_CHAR(ALUMNOS(i).FECHA_NAC, 'DD-MON-YYYY'));
+        DBMS_OUTPUT.PUT_LINE('ID de Curso: ' || ALUMNOS(i).ID_CURSO);
+
+        -- Mostrar calificaciones
+        FOR j IN 1..ALUMNOS(i).CALIFICACIONES.COUNT LOOP
+            DBMS_OUTPUT.PUT_LINE('Calificaciones para Asignatura ' || j || ':');
+            DBMS_OUTPUT.PUT_LINE('DNI: ' || ALUMNOS(i).CALIFICACIONES(j).DNI);
+            DBMS_OUTPUT.PUT_LINE('Código de Asignatura: ' || ALUMNOS(i).CALIFICACIONES(j).CODIGO_ASIG);
+            DBMS_OUTPUT.PUT_LINE('Nota 1er Evaluación: ' || ALUMNOS(i).CALIFICACIONES(j).NOTA1EV.NOTA);
+            DBMS_OUTPUT.PUT_LINE('Nota 2da Evaluación: ' || ALUMNOS(i).CALIFICACIONES(j).NOTA2EV.NOTA);
+            DBMS_OUTPUT.PUT_LINE('Nota 3ra Evaluación: ' || ALUMNOS(i).CALIFICACIONES(j).NOTA3EV.NOTA);
+            DBMS_OUTPUT.PUT_LINE('Nota Final Junio: ' || ALUMNOS(i).CALIFICACIONES(j).NOTAFJUN.NOTA);
+            DBMS_OUTPUT.PUT_LINE('Nota Septiembre: ' || ALUMNOS(i).CALIFICACIONES(j).NOTASEPT.NOTA);
+        END LOOP;
+
+        DBMS_OUTPUT.PUT_LINE('------------------------------');
+    END LOOP;
 END;
 /
