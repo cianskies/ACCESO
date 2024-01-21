@@ -60,14 +60,17 @@ CREATE OR REPLACE TYPE CURSO AS OBJECT(
 	TURNO CHAR(1)
 );
 /
---1--
-CREATE OR REPLACE TYPE TASIGNATURAS AS TABLE OF ASIGNATURA;
+
+--1-
+
+CREATE TABLE TASIGNATURAS OF ASIGNATURA;
 /
 --2--
-CREATE OR REPLACE TYPE TCURSOS AS TABLE OF CURSO;
+CREATE TABLE TCURSOS OF CURSO;
 /
 --3--
-CREATE OR REPLACE TYPE TALUMNOS AS TABLE OF ALUMNO;
+CREATE TABLE TALUMNOS OF ALUMNO
+	NESTED TABLE CALIFICACIONES STORE AS CALIFICACIONES_ASIGNATURAS;
 /
 
 ---------------------------
@@ -75,25 +78,17 @@ CREATE OR REPLACE TYPE TALUMNOS AS TABLE OF ALUMNO;
 ---DECLARACIONES-----------
 
 DECLARE
-	-- Hay que empezar la casa por el tejado, primero hacer los cursos y
-	-- las asignaturas, las inicializamos aquí y los alumnos en el BEGIN.
-	CURSOS TCURSOS := TCURSOS(
-		CURSO(1, 'Primer curso', 'Basico', '0'),
-		CURSO(2, 'Segundo curso', 'Basico', '1'),
-		CURSO(3, 'Tercer curso', 'Intermedio', '1'),
-		CURSO(4, 'Cuarto curso', 'Avanzado', '0')
-	);
-
-	ASIGNATURAS TASIGNATURAS := TASIGNATURAS(
-		ASIGNATURA(0001, 'Lengua', '1'),
-		ASIGNATURA(0002, 'Mates', '1'),
-		ASIGNATURA(0003, 'Ingles', '1'),
-		ASIGNATURA(0004, 'Naturales', '2'),
-		ASIGNATURA(0005, 'Sociales', '2'),
-		ASIGNATURA(0006, 'Fisica', '2')
-	);
-
-	ALUMNOS TALUMNOS := TALUMNOS();
+		C1 CURSO:=CURSO(1, 'Primer curso', 'Basico', '0');
+		C2 CURSO:=CURSO(2, 'Segundo curso', 'Basico', '1');
+		C3 CURSO:=CURSO(3, 'Tercer curso', 'Intermedio', '1');
+		C4 CURSO:=CURSO(4, 'Cuarto curso', 'Avanzado', '0');
+		
+		A1 ASIGNATURA:=ASIGNATURA(0001, 'Lengua', '1');
+		A2 ASIGNATURA:=ASIGNATURA(0002, 'Mates', '1');
+		A3 ASIGNATURA:=ASIGNATURA(0003, 'Ingles', '1');
+		A4 ASIGNATURA:=ASIGNATURA(0004, 'Naturales', '2');
+		A5 ASIGNATURA:=ASIGNATURA(0005, 'Sociales', '2');
+		A6 ASIGNATURA:=ASIGNATURA(0006, 'Fisica', '2');
 
 	LUIS ALUMNO := ALUMNO(
 		'56195364Q',
@@ -133,40 +128,76 @@ DECLARE
             NOTASASIGNATURA('98765432B', 0004, NOTA(9), NOTA(9), NOTA(8), NOTA(9), NOTA(8)),
             NOTASASIGNATURA('98765432B', 0006, NOTA(8), NOTA(8), NOTA(9), NOTA(9), NOTA(9))
         )
-    );
+		);
 	
 
 BEGIN
-	-- Insertar el alumno Luis en la tabla de alumnos.
-	ALUMNOS.EXTEND;
-	ALUMNOS(ALUMNOS.LAST) := LUIS;
-	ALUMNOS.EXTEND;
-	ALUMNOS(ALUMNOS.LAST) := CARLOS;
-	ALUMNOS.EXTEND;
-	ALUMNOS(ALUMNOS.LAST) := MARIA;
+	INSERT INTO TCURSOS VALUES(C1);
+	INSERT INTO TCURSOS VALUES(C2);
+	INSERT INTO TCURSOS VALUES(C3);
+	INSERT INTO TCURSOS VALUES(C4);
 	
-	 FOR i IN 1..ALUMNOS.COUNT LOOP
-        DBMS_OUTPUT.PUT_LINE('Alumno ' || i || ':');
-        DBMS_OUTPUT.PUT_LINE('DNI: ' || ALUMNOS(i).DNI);
-        DBMS_OUTPUT.PUT_LINE('Nombre: ' || ALUMNOS(i).NOMBRE);
-        DBMS_OUTPUT.PUT_LINE('Dirección: ' || ALUMNOS(i).DIREC.CALLE || ', ' || ALUMNOS(i).DIREC.POBLACION || ', ' || ALUMNOS(i).DIREC.CODPOSTAL);
-        DBMS_OUTPUT.PUT_LINE('Teléfonos: ' || ALUMNOS(i).TELF(1) || ', ' || ALUMNOS(i).TELF(2));
-        DBMS_OUTPUT.PUT_LINE('Fecha de Nacimiento: ' || TO_CHAR(ALUMNOS(i).FECHA_NAC, 'DD-MON-YYYY'));
-        DBMS_OUTPUT.PUT_LINE('ID de Curso: ' || ALUMNOS(i).ID_CURSO);
+	INSERT INTO TASIGNATURAS VALUES(A1);
+	INSERT INTO TASIGNATURAS VALUES(A2);
+	INSERT INTO TASIGNATURAS VALUES(A3);
+	INSERT INTO TASIGNATURAS VALUES(A4);
+	INSERT INTO TASIGNATURAS VALUES(A5);
+	INSERT INTO TASIGNATURAS VALUES(A6);
+	
+	INSERT INTO TALUMNOS VALUES(LUIS);
+	INSERT INTO TALUMNOS VALUES(CARLOS);
+	INSERT INTO TALUMNOS VALUES(MARIA);
 
-        -- Mostrar calificaciones
-        FOR j IN 1..ALUMNOS(i).CALIFICACIONES.COUNT LOOP
-            DBMS_OUTPUT.PUT_LINE('Calificaciones para Asignatura ' || j || ':');
-            DBMS_OUTPUT.PUT_LINE('DNI: ' || ALUMNOS(i).CALIFICACIONES(j).DNI);
-            DBMS_OUTPUT.PUT_LINE('Código de Asignatura: ' || ALUMNOS(i).CALIFICACIONES(j).CODIGO_ASIG);
-            DBMS_OUTPUT.PUT_LINE('Nota 1er Evaluación: ' || ALUMNOS(i).CALIFICACIONES(j).NOTA1EV.NOTA);
-            DBMS_OUTPUT.PUT_LINE('Nota 2da Evaluación: ' || ALUMNOS(i).CALIFICACIONES(j).NOTA2EV.NOTA);
-            DBMS_OUTPUT.PUT_LINE('Nota 3ra Evaluación: ' || ALUMNOS(i).CALIFICACIONES(j).NOTA3EV.NOTA);
-            DBMS_OUTPUT.PUT_LINE('Nota Final Junio: ' || ALUMNOS(i).CALIFICACIONES(j).NOTAFJUN.NOTA);
-            DBMS_OUTPUT.PUT_LINE('Nota Septiembre: ' || ALUMNOS(i).CALIFICACIONES(j).NOTASEPT.NOTA);
-        END LOOP;
 
-        DBMS_OUTPUT.PUT_LINE('------------------------------');
-    END LOOP;
+END;
+/
+
+
+--Ahora vamos a encargarnos de hacer procedimientos y funciones--
+CREATE OR REPLACE PROCEDURE GETDATOSALUMNO(IDENTFICADOR VARCHAR2) AS
+	CURSOR C1 IS 
+		SELECT * FROM TALUMNOS
+		WHERE DNI=IDENTFICADOR;
+	NOMBREASIGNATURA VARCHAR2(30);
+BEGIN
+	DBMS_OUTPUT.PUT_LINE('Mostrando los datos del alumno con DNI: '||IDENTFICADOR);
+	DBMS_OUTPUT.PUT_LINE('------------------------------------------------');
+	FOR I IN C1 LOOP
+		DBMS_OUTPUT.PUT_LINE('Nombre: '||I.NOMBRE);
+			DBMS_OUTPUT.PUT_LINE('--------------------');
+		DBMS_OUTPUT.PUT_LINE('-Direccion: ');
+		DBMS_OUTPUT.PUT_LINE('Calle: '||I.DIREC.CALLE||'// Poblacion: '||I.DIREC.POBLACION||'// Codigo postal: '||I.DIREC.CODPOSTAL);
+		DBMS_OUTPUT.PUT_LINE('--------------------');
+		DBMS_OUTPUT.PUT_LINE('telefonos: ');
+			FOR J IN 1..I.TELF.COUNT LOOP
+				DBMS_OUTPUT.PUT_LINE(I.TELF(J));--try
+			END LOOP;
+		DBMS_OUTPUT.PUT_LINE('--------------------');
+		DBMS_OUTPUT.PUT_LINE('Fecha de nacimiento: '||I.FECHA_NAC);
+		DBMS_OUTPUT.PUT_LINE('--------------------');
+		DBMS_OUTPUT.PUT_LINE('ID de curso: '||I.ID_CURSO);
+		DBMS_OUTPUT.PUT_LINE('--------------------');
+		DBMS_OUTPUT.PUT_LINE('Calificaciones: ');
+		FOR j IN 1..I.CALIFICACIONES.COUNT LOOP
+			DBMS_OUTPUT.PUT_LINE('--/////////-');
+			DBMS_OUTPUT.PUT_LINE('Calificaciones para Asignatura ' || j || ':');
+			SELECT NOMBRE INTO NOMBREASIGNATURA FROM TASIGNATURAS WHERE COD_ASIG=I.CALIFICACIONES(j).CODIGO_ASIG;
+			DBMS_OUTPUT.PUT_LINE('Nombre de asignatura: ' ||NOMBREASIGNATURA );
+			DBMS_OUTPUT.PUT_LINE('Nota 1er Evaluación: ' || I.CALIFICACIONES(j).NOTA1EV.NOTA);
+			DBMS_OUTPUT.PUT_LINE('Nota 2da Evaluación: ' || I.CALIFICACIONES(j).NOTA2EV.NOTA);
+			DBMS_OUTPUT.PUT_LINE('Nota 3ra Evaluación: ' || I.CALIFICACIONES(j).NOTA3EV.NOTA);
+			DBMS_OUTPUT.PUT_LINE('Nota Final Junio: ' || I.CALIFICACIONES(j).NOTAFJUN.NOTA);
+			DBMS_OUTPUT.PUT_LINE('Nota Septiembre: ' || I.CALIFICACIONES(j).NOTASEPT.NOTA);
+		END LOOP;
+		DBMS_OUTPUT.PUT_LINE('--------------------');
+	END LOOP;
+	DBMS_OUTPUT.PUT_LINE('------------------------------------------------');
+END;
+/
+--probando el procedimiento
+DECLARE
+	ID VARCHAR2(10):='56195364Q';
+BEGIN
+	GETDATOSALUMNO(ID);
 END;
 /
